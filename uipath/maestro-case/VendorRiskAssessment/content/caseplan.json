@@ -1,0 +1,378 @@
+{
+    "id": "case-1JILJYfKCV",
+    "name": "VendorRiskAssessment",
+    "version": "20.0.0",
+    "description": "Vendor third-party risk assessment case",
+    "bindings": [],
+    "variables": {
+        "inputOutputs": []
+    },
+    "metadata": {
+        "caseIdentifier": "VendorRiskAssessment",
+        "caseAppEnabled": true,
+        "caseIdentifierType": "constant",
+        "publishVersion": 2,
+        "caseExitRules": [
+            {
+                "id": "Condition_1Jm31Q",
+                "displayName": "Case Complete",
+                "rules": [
+                    [
+                        {
+                            "rule": "required-stages-completed",
+                            "id": "Rule_qflKlb"
+                        }
+                    ]
+                ],
+                "marksCaseComplete": true
+            }
+        ],
+        "slaRules": [
+            {
+                "expression": "=js:true",
+                "count": 7,
+                "unit": "d"
+            }
+        ]
+    },
+    "nodes": [
+        {
+            "id": "Stage_SsCFvM",
+            "type": "case-management:Stage",
+            "position": {
+                "x": 2600,
+                "y": 200
+            },
+            "style": {
+                "width": 304,
+                "opacity": 0.8
+            },
+            "measured": {
+                "width": 304,
+                "height": 128
+            },
+            "width": 304,
+            "zIndex": 1001,
+            "data": {
+                "label": "Continuous Monitoring",
+                "parentElement": {
+                    "id": "root",
+                    "type": "case-management:root"
+                },
+                "isInvalidDropTarget": false,
+                "isPendingParent": false,
+                "tasks": [],
+                "description": "Daily scan, reopen on risk signal detected"
+            }
+        },
+        {
+            "id": "Stage_sF6VGv",
+            "type": "case-management:Stage",
+            "position": {
+                "x": 2100,
+                "y": 200
+            },
+            "style": {
+                "width": 304,
+                "opacity": 0.8
+            },
+            "measured": {
+                "width": 304,
+                "height": 128
+            },
+            "width": 304,
+            "zIndex": 1001,
+            "data": {
+                "label": "Decision",
+                "parentElement": {
+                    "id": "root",
+                    "type": "case-management:root"
+                },
+                "isInvalidDropTarget": false,
+                "isPendingParent": false,
+                "tasks": [],
+                "description": "Approve, conditional approve, reject, or escalate",
+                "slaRules": [
+                    {
+                        "expression": "=js:true",
+                        "count": 24,
+                        "unit": "h"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "Stage_qhTwvQ",
+            "type": "case-management:Stage",
+            "position": {
+                "x": 1600,
+                "y": 200
+            },
+            "style": {
+                "width": 304,
+                "opacity": 0.8
+            },
+            "measured": {
+                "width": 304,
+                "height": 128
+            },
+            "width": 304,
+            "zIndex": 1001,
+            "data": {
+                "label": "Human Review",
+                "parentElement": {
+                    "id": "root",
+                    "type": "case-management:root"
+                },
+                "isInvalidDropTarget": false,
+                "isPendingParent": false,
+                "tasks": [],
+                "description": "Risk analyst reviews high-risk cases via Action Center",
+                "slaRules": [
+                    {
+                        "expression": "=js:true",
+                        "count": 48,
+                        "unit": "h"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "Stage_E9Zk1S",
+            "type": "case-management:Stage",
+            "position": {
+                "x": 1100,
+                "y": 200
+            },
+            "style": {
+                "width": 304,
+                "opacity": 0.8
+            },
+            "measured": {
+                "width": 304,
+                "height": 128
+            },
+            "width": 304,
+            "zIndex": 1001,
+            "data": {
+                "label": "Risk Scoring",
+                "parentElement": {
+                    "id": "root",
+                    "type": "case-management:root"
+                },
+                "isInvalidDropTarget": false,
+                "isPendingParent": false,
+                "tasks": [],
+                "description": "Weighted 5-dimension risk score with confidence calculation",
+                "isRequired": true,
+                "slaRules": [
+                    {
+                        "expression": "=js:true",
+                        "count": 1,
+                        "unit": "h"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "Stage_s5af1k",
+            "type": "case-management:Stage",
+            "position": {
+                "x": 600,
+                "y": 200
+            },
+            "style": {
+                "width": 304,
+                "opacity": 0.8
+            },
+            "measured": {
+                "width": 304,
+                "height": 128
+            },
+            "width": 304,
+            "zIndex": 1001,
+            "data": {
+                "label": "Automated Assessment",
+                "parentElement": {
+                    "id": "root",
+                    "type": "case-management:root"
+                },
+                "isInvalidDropTarget": false,
+                "isPendingParent": false,
+                "tasks": [],
+                "description": "Research, compliance, and financial agents run in parallel",
+                "isRequired": true,
+                "slaRules": [
+                    {
+                        "expression": "=js:true",
+                        "count": 24,
+                        "unit": "h"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "Stage_tbCpPi",
+            "type": "case-management:Stage",
+            "position": {
+                "x": 100,
+                "y": 200
+            },
+            "style": {
+                "width": 304,
+                "opacity": 0.8
+            },
+            "measured": {
+                "width": 304,
+                "height": 128
+            },
+            "width": 304,
+            "zIndex": 1001,
+            "data": {
+                "label": "Intake",
+                "parentElement": {
+                    "id": "root",
+                    "type": "case-management:root"
+                },
+                "isInvalidDropTarget": false,
+                "isPendingParent": false,
+                "tasks": [],
+                "description": "Collect vendor info, parse docs, classify tier",
+                "isRequired": true,
+                "entryConditions": [
+                    {
+                        "id": "Condition_rbkdYQ",
+                        "displayName": "Case Entered",
+                        "rules": [
+                            [
+                                {
+                                    "rule": "case-entered",
+                                    "id": "Rule_6kdyJ4"
+                                }
+                            ]
+                        ]
+                    }
+                ],
+                "slaRules": [
+                    {
+                        "expression": "=js:true",
+                        "count": 4,
+                        "unit": "h"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "trigger_1",
+            "type": "case-management:Trigger",
+            "position": {
+                "x": 0,
+                "y": 0
+            },
+            "data": {
+                "label": "Trigger 1"
+            }
+        }
+    ],
+    "edges": [
+        {
+            "id": "edge_B6kDiW",
+            "source": "trigger_1",
+            "target": "Stage_tbCpPi",
+            "sourceHandle": "trigger_1____source____right",
+            "targetHandle": "Stage_tbCpPi____target____left",
+            "data": {
+                "label": "New vendor request"
+            },
+            "type": "case-management:TriggerEdge"
+        },
+        {
+            "id": "edge_6ZEzrq",
+            "source": "Stage_tbCpPi",
+            "target": "Stage_s5af1k",
+            "sourceHandle": "Stage_tbCpPi____source____right",
+            "targetHandle": "Stage_s5af1k____target____left",
+            "data": {
+                "label": "Intake complete"
+            },
+            "type": "case-management:Edge"
+        },
+        {
+            "id": "edge_mXx2HF",
+            "source": "Stage_s5af1k",
+            "target": "Stage_E9Zk1S",
+            "sourceHandle": "Stage_s5af1k____source____right",
+            "targetHandle": "Stage_E9Zk1S____target____left",
+            "data": {
+                "label": "Agents complete"
+            },
+            "type": "case-management:Edge"
+        },
+        {
+            "id": "edge_Q81gbb",
+            "source": "Stage_E9Zk1S",
+            "target": "Stage_qhTwvQ",
+            "sourceHandle": "Stage_E9Zk1S____source____right",
+            "targetHandle": "Stage_qhTwvQ____target____left",
+            "data": {
+                "label": "High risk or low confidence"
+            },
+            "type": "case-management:Edge"
+        },
+        {
+            "id": "edge_yJiyqv",
+            "source": "Stage_E9Zk1S",
+            "target": "Stage_sF6VGv",
+            "sourceHandle": "Stage_E9Zk1S____source____right",
+            "targetHandle": "Stage_sF6VGv____target____left",
+            "data": {
+                "label": "Low or medium risk auto-approve"
+            },
+            "type": "case-management:Edge"
+        },
+        {
+            "id": "edge_oxqjtN",
+            "source": "Stage_qhTwvQ",
+            "target": "Stage_sF6VGv",
+            "sourceHandle": "Stage_qhTwvQ____source____right",
+            "targetHandle": "Stage_sF6VGv____target____left",
+            "data": {
+                "label": "Analyst decision made"
+            },
+            "type": "case-management:Edge"
+        },
+        {
+            "id": "edge_hWs1Q8",
+            "source": "Stage_qhTwvQ",
+            "target": "Stage_s5af1k",
+            "sourceHandle": "Stage_qhTwvQ____source____bottom",
+            "targetHandle": "Stage_s5af1k____target____bottom",
+            "data": {
+                "label": "Request more investigation"
+            },
+            "type": "case-management:Edge"
+        },
+        {
+            "id": "edge_QgZvm6",
+            "source": "Stage_sF6VGv",
+            "target": "Stage_SsCFvM",
+            "sourceHandle": "Stage_sF6VGv____source____right",
+            "targetHandle": "Stage_SsCFvM____target____left",
+            "data": {
+                "label": "Approved or conditional"
+            },
+            "type": "case-management:Edge"
+        },
+        {
+            "id": "edge_6eHtug",
+            "source": "Stage_SsCFvM",
+            "target": "Stage_s5af1k",
+            "sourceHandle": "Stage_SsCFvM____source____top",
+            "targetHandle": "Stage_s5af1k____target____top",
+            "data": {
+                "label": "Risk signal detected - reopen"
+            },
+            "type": "case-management:Edge"
+        }
+    ]
+}

@@ -1,0 +1,29 @@
+{
+  "name": "TriggerRemediationAgent",
+  "description": "Calls the Remediation Agent when a conditional approval decision is made",
+  "version": "1.0.0",
+  "trigger": "maestro_stage_entry",
+  "stage": "decision",
+  "condition": "final_decision == ConditionalApproved",
+  "endpoint": {
+    "method": "POST",
+    "url": "${API_BASE_URL}/remediate",
+    "headers": {"Content-Type": "application/json"},
+    "body": {
+      "vendor_id":       "${case.vendor_id}",
+      "vendor_name":     "${case.vendor_name}",
+      "overall_score":   "${case.overall_score}",
+      "classification":  "${case.classification}",
+      "flags":           "${case.flags}",
+      "risk_signals":    "${case.risk_signals}",
+      "compliance_gaps": "${case.compliance_gaps}",
+      "financial_health":"${case.financial_health}",
+      "bankruptcy_risk": "${case.bankruptcy_risk}",
+      "tier":            "${case.tier}"
+    }
+  },
+  "output_mapping": {
+    "case.remediation_tasks": "${response.tasks}",
+    "case.next_review_date":  "${response.estimated_resolution_days}"
+  }
+}

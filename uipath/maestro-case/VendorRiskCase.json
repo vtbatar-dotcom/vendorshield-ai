@@ -1,0 +1,126 @@
+{
+  "name": "VendorRiskAssessment",
+  "displayName": "Vendor Risk Assessment",
+  "description": "Dynamic case for third-party vendor risk management",
+  "version": "1.0.0",
+  "stages": [
+    {
+      "id": "intake",
+      "name": "Intake",
+      "displayName": "Intake",
+      "sla_hours": 4,
+      "fields": [
+        {"name": "vendor_id",     "type": "string",  "required": true},
+        {"name": "vendor_name",   "type": "string",  "required": true},
+        {"name": "vendor_domain", "type": "string",  "required": false},
+        {"name": "tier",          "type": "enum",    "values": ["Critical","High","Medium","Low"], "required": true},
+        {"name": "duns_number",   "type": "string",  "required": false},
+        {"name": "markets",       "type": "string",  "required": false}
+      ],
+      "transitions": [
+        {"to": "assessment", "condition": "always"}
+      ]
+    },
+    {
+      "id": "assessment",
+      "name": "Assessment",
+      "displayName": "Automated Assessment",
+      "sla_hours": 24,
+      "fields": [
+        {"name": "research_signals",  "type": "json",   "required": false},
+        {"name": "sentiment_score",   "type": "number", "required": false},
+        {"name": "compliance_score",  "type": "number", "required": false},
+        {"name": "compliance_gaps",   "type": "json",   "required": false},
+        {"name": "financial_health",  "type": "string", "required": false},
+        {"name": "bankruptcy_risk",   "type": "number", "required": false}
+      ],
+      "transitions": [
+        {"to": "risk_scoring", "condition": "all_agents_complete"}
+      ]
+    },
+    {
+      "id": "risk_scoring",
+      "name": "RiskScoring",
+      "displayName": "Risk Scoring",
+      "sla_hours": 1,
+      "fields": [
+        {"name": "overall_score",    "type": "number", "required": false},
+        {"name": "classification",   "type": "enum",   "values": ["Low","Medium","High","Critical"], "required": false},
+        {"name": "confidence",       "type": "number", "required": false},
+        {"name": "dimension_scores", "type": "json",   "required": false},
+        {"name": "flags",            "type": "json",   "required": false}
+      ],
+      "transitions": [
+        {"to": "human_review", "condition": "overall_score > 50 OR confidence < 60 OR tier == Critical"},
+        {"to": "decision",     "condition": "overall_score <= 50 AND confidence >= 60 AND tier != Critical"}
+      ]
+    },
+    {
+      "id": "human_review",
+      "name": "HumanReview",
+      "displayName": "Human Review",
+      "sla_hours": 48,
+      "action_center": true,
+      "fields": [
+        {"name": "analyst_decision",     "type": "enum",   "values": ["Approve","ConditionalApprove","Reject","Escalate","RequestMoreInfo"], "required": true},
+        {"name": "analyst_notes",        "type": "string", "required": false},
+        {"name": "score_override",       "type": "number", "required": false},
+        {"name": "override_justification","type": "string","required": false}
+      ],
+      "transitions": [
+        {"to": "decision",   "condition": "analyst_decision in [Approve, ConditionalApprove, Reject, Escalate]"},
+        {"to": "assessment", "condition": "analyst_decision == RequestMoreInfo"}
+      ]
+    },
+    {
+      "id": "decision",
+      "name": "Decision",
+      "displayName": "Decision & Action",
+      "sla_hours": 24,
+      "fields": [
+        {"name": "final_decision",     "type": "enum", "values": ["Approved","ConditionalApproved","Rejected","Escalated"], "required": true},
+        {"name": "remediation_tasks",  "type": "json", "required": false},
+        {"name": "next_review_date",   "type": "date", "required": false}
+      ],
+      "transitions": [
+        {"to": "monitoring", "condition": "final_decision in [Approved, ConditionalApproved]"}
+      ]
+    },
+    {
+      "id": "monitoring",
+      "name": "Monitoring",
+      "displayName": "Continuous Monitoring",
+      "sla_hours": null,
+      "fields": [
+        {"name": "last_scan_date",   "type": "date",    "required": false},
+        {"name": "alert_count",      "type": "number",  "required": false},
+        {"name": "requires_reopen",  "type": "boolean", "required": false}
+      ],
+      "transitions": [
+        {"to": "assessment", "condition": "requires_reopen == true"}
+      ]
+    }
+  ],
+  "exception_paths": [
+    {
+      "name": "LowConfidence",
+      "trigger": "confidence < 60",
+      "action": "loop_back_to_assessment"
+    },
+    {
+      "name": "SLABreach",
+      "trigger": "sla_breached == true",
+      "action": "escalate_to_risk_committee"
+    },
+    {
+      "name": "SanctionsHit",
+      "trigger": "sanctions_hits.length > 0",
+      "action": "immediate_reject_and_notify"
+    },
+    {
+      "name": "CriticalBreach",
+      "trigger": "breach_detected == true AND tier == Critical",
+      "action": "emergency_reassessment"
+    }
+  ]
+}

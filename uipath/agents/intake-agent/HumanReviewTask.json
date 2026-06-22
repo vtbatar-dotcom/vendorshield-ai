@@ -1,0 +1,61 @@
+{
+  "name": "VendorRiskHumanReview",
+  "displayName": "Vendor Risk Review Required",
+  "description": "Risk analyst review task for high-risk vendor assessment",
+  "priority": "High",
+  "assignTo": "risk_analysts_group",
+  "form_fields": [
+    {
+      "name": "vendor_summary",
+      "type": "readonly",
+      "label": "Vendor Assessment Summary",
+      "value": "${case.vendor_name} — Score: ${case.overall_score}/100 (${case.classification})"
+    },
+    {
+      "name": "risk_signals",
+      "type": "readonly_list",
+      "label": "Risk Signals Found",
+      "value": "${case.risk_signals}"
+    },
+    {
+      "name": "compliance_gaps",
+      "type": "readonly_list",
+      "label": "Compliance Gaps",
+      "value": "${case.compliance_gaps}"
+    },
+    {
+      "name": "flags",
+      "type": "readonly_list",
+      "label": "Risk Flags",
+      "value": "${case.flags}"
+    },
+    {
+      "name": "analyst_decision",
+      "type": "dropdown",
+      "label": "Decision",
+      "required": true,
+      "options": ["Approve","ConditionalApprove","Reject","Escalate","RequestMoreInfo"]
+    },
+    {
+      "name": "analyst_notes",
+      "type": "textarea",
+      "label": "Analyst Notes",
+      "required": false,
+      "placeholder": "Add any additional context or justification..."
+    },
+    {
+      "name": "score_override",
+      "type": "number",
+      "label": "Score Override (optional)",
+      "required": false,
+      "min": 0,
+      "max": 100
+    },
+    {
+      "name": "override_justification",
+      "type": "textarea",
+      "label": "Override Justification (required if overriding)",
+      "required": false
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "name": "TriggerResearchAgent",
+  "description": "Calls the VendorShield Research Agent and attaches findings to the Maestro case",
+  "version": "1.0.0",
+  "trigger": "maestro_stage_entry",
+  "stage": "assessment",
+  "endpoint": {
+    "method": "POST",
+    "url": "${API_BASE_URL}/api/assess/full",
+    "headers": {"Content-Type": "application/json"},
+    "body": {
+      "vendor_id":     "${case.vendor_id}",
+      "vendor_name":   "${case.vendor_name}",
+      "vendor_domain": "${case.vendor_domain}",
+      "tier":          "${case.tier}",
+      "certifications": [],
+      "markets":       ["US", "EU"]
+    }
+  },
+  "output_mapping": {
+    "case.overall_score":   "${response.overall_score}",
+    "case.classification":  "${response.classification}",
+    "case.confidence":      "${response.confidence}",
+    "case.risk_signals":    "${response.risk_signals}",
+    "case.compliance_gaps": "${response.compliance_gaps}",
+    "case.financial_health":"${response.financial_health}",
+    "case.flags":           "${response.flags}"
+  }
+}
