@@ -1,0 +1,8 @@
+{
+  "vendor_id": "V001",
+  "vendor_name": "Acme Cloud Inc",
+  "vendor_domain": "acme.io",
+  "duns_number": "123456789",
+  "tier": "High",
+  "documents": ["soc2-2024.pdf", "iso27001-cert.pdf"]
+}

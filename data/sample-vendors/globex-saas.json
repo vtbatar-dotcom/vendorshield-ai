@@ -1,0 +1,8 @@
+{
+  "vendor_id": "V002",
+  "vendor_name": "Globex SaaS Ltd",
+  "vendor_domain": "globex.com",
+  "duns_number": "987654321",
+  "tier": "Medium",
+  "documents": ["soc2-2024.pdf"]
+}
