@@ -94,11 +94,23 @@ print(f"\n{sep('-')}")
 print("STEP 2/4 — Compliance Agent")
 print(sep("-"))
 t0 = time.time()
+# Known certs for demo vendors
+KNOWN_CERTS = {
+    "microsoft": [
+        {"name": "SOC2", "issued": "2024-01-01", "expiry": "2027-01-01", "issuer": "Deloitte"},
+        {"name": "ISO27001", "issued": "2023-06-01", "expiry": "2027-06-01", "issuer": "BSI"},
+        {"name": "GDPR", "issued": "2023-01-01", "expiry": "2027-01-01", "issuer": "TUV"},
+    ],
+    "globex saas ltd": [
+        {"name": "SOC2", "issued": "2024-06-01", "expiry": "2027-06-01", "issuer": "PwC"},
+    ],
+}
+vendor_certs = KNOWN_CERTS.get(VENDOR_NAME.lower(), [])
 compliance = post(PORTS["compliance"] + "/assess", {
     "vendor_id": VENDOR_ID,
     "vendor_name": VENDOR_NAME,
     "tier": VENDOR_TIER,
-    "certifications": [],
+    "certifications": vendor_certs,
     "markets": ["US", "EU"]
 })
 t1 = time.time()
