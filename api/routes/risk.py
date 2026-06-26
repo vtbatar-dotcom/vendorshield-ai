@@ -1,11 +1,11 @@
 """Risk Scoring Agent — real weighted model.
 
+Imports canonical schemas from api.models.schemas to prevent drift.
 Weights: Security 30%, Compliance 25%, Financial 20%, Operational 15%, ESG 10%
 """
 from __future__ import annotations
-from typing import Optional
 from fastapi import APIRouter
-from pydantic import BaseModel
+from api.models.schemas import RiskRequest, RiskResponse, DimensionScores
 
 router = APIRouter(prefix="/api/risk", tags=["risk"])
 
@@ -22,49 +22,6 @@ OPERATIONAL_SIGNALS = ["outage", "downtime", "disruption", "supply chain", "depe
 ESG_SIGNALS = ["discrimination", "harassment", "environmental", "bribery", "corruption", "scandal"]
 
 
-class NewsItem(BaseModel):
-    title: str
-    url: str
-    published: str
-    sentiment: float
-
-
-class FinancialData(BaseModel):
-    vendor_id: str
-    credit_score: int
-    financial_health: str
-    revenue_trend: str
-    bankruptcy_risk: float
-
-
-class RiskRequest(BaseModel):
-    vendor_id: str
-    research_signals: list[str] = []
-    news_items: list[NewsItem] = []
-    sentiment_score: float = 0.0
-    compliance_gaps: list[str] = []
-    financial_data: Optional[FinancialData] = None
-    sanctions_hits: list[str] = []
-
-
-class DimensionScores(BaseModel):
-    security: int
-    compliance: int
-    financial: int
-    operational: int
-    esg: int
-
-
-class RiskResponse(BaseModel):
-    vendor_id: str
-    overall_score: int
-    dimension_scores: DimensionScores
-    confidence: int
-    classification: str
-    routing: str
-    flags: list[str]
-
-
 def _signal_score(signals: list[str], keywords: list[str]) -> int:
     combined = " ".join(signals).lower()
     hits = sum(1 for kw in keywords if kw in combined)
@@ -72,7 +29,6 @@ def _signal_score(signals: list[str], keywords: list[str]) -> int:
 
 
 def _sentiment_to_boost(sentiment: float) -> int:
-    """Only boost security score for clearly negative sentiment (below -0.3)."""
     if sentiment >= -0.3:
         return 0
     return int(abs(sentiment + 0.3) / 0.7 * 40)
@@ -98,20 +54,16 @@ def score(req: RiskRequest) -> RiskResponse:
     if req.sanctions_hits:
         all_signals += req.sanctions_hits
 
-    # Security: from signals + sentiment boost (only for clearly negative)
     security = _signal_score(all_signals, SECURITY_SIGNALS)
     security = min(100, security + _sentiment_to_boost(req.sentiment_score))
 
-    # Compliance: signals + direct penalty per gap
     compliance = _signal_score(all_signals, COMPLIANCE_SIGNALS)
-    # Each missing/expired cert = +25 points
     gap_penalty = sum(25 for g in req.compliance_gaps
                       if any(s in g.upper() for s in ["MISSING", "EXPIRED", "EXPIRING"]))
     compliance = min(100, compliance + gap_penalty)
     if req.sanctions_hits:
         compliance = min(100, compliance + 40)
 
-    # Financial: from financial_data or signals
     financial = 10
     if req.financial_data:
         financial = int(req.financial_data.bankruptcy_risk * 100)

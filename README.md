@@ -1,39 +1,67 @@
 # VendorShield AI
 
-Agentic third-party risk management platform. Each vendor is a dynamic case
-in UiPath Maestro, assessed by specialized agents (LangChain research, CrewAI
-financial, UiPath coded risk-scoring) with human-in-the-loop review.
+Agentic third-party vendor risk management platform. Each vendor assessment
+runs through 5 AI agents (Claude + Tavily) orchestrated via UiPath Maestro.
 
-## Status: Phase 1 — Foundation
+## Status: Production-ready local pipeline + UiPath Maestro Case deployed
 
-- [x] Repo + MIT license + structure
-- [x] Python project scaffold
-- [x] `.env.example` with all required keys
-- [x] Mock FastAPI backend (all 5 endpoints respond)
-- [x] Maestro Case schema designed (`uipath/maestro-case/case-schema.md`)
-- [ ] UiPath CLI authenticated (needs Labs access)
+- [x] 5 AI agents running (ports 8000-8004)
+- [x] Full pipeline: vendor name → risk report in ~90 seconds
+- [x] UiPath Maestro Case published (6 stages, SLAs, exit conditions)
+- [x] End-to-end demo script
 
-## Quick start (mock API)
+## Quick start
 
 ```bash
-cd api
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-cd ..
-cp .env.example .env
-uvicorn api.main:app --reload --port 8000
+# 1. Clone and set up environment
+git clone https://github.com/vtbatar-dotcom/vendorshield-ai
+cd vendorshield-ai
+cp .env.example .env   # fill in ANTHROPIC_API_KEY and TAVILY_API_KEY
+
+# 2. Install deps for each agent
+cd api && python3.11 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && cd ..
+cd external-agents/research-agent && python3.11 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && cd ../..
+cd external-agents/compliance-agent && python3.11 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && cd ../..
+cd external-agents/financial-agent && python3.11 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && cd ../..
+cd external-agents/remediation-agent && python3.11 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && cd ../..
+
+# 3. Start all agents (5 terminals) or use start.sh
+bash start.sh
+
+# 4. Run demo
+python3 demo.py "Acme Cloud Inc" High
+python3 demo.py "Microsoft" High
 ```
 
-Open http://localhost:8000/docs for the interactive API.
+## Architecture
+## Agents
 
-## Repo layout
+| Port | Agent | Framework | Purpose |
+|------|-------|-----------|---------|
+| 8000 | Main API + Risk Scoring | FastAPI | Bridge + weighted scoring |
+| 8001 | Research Agent | Anthropic SDK + Tavily | OSINT, news, sanctions |
+| 8002 | Compliance Agent | Anthropic SDK | Cert gap analysis |
+| 8003 | Financial Agent | Anthropic SDK | Analyst+reviewer pattern |
+| 8004 | Remediation Agent | Anthropic SDK | Task generation |
 
-```
-api/                 FastAPI bridge layer (mock in Phase 1)
-external-agents/     LangChain (research) + CrewAI (financial) agents
-uipath/              Maestro case, Agent Builder, coded agents, API workflows
-data/sample-vendors/ Deterministic demo vendors (V001 flagged, V002 clean)
-docs/                Setup guide and architecture notes
-```
+## Risk Scoring Model
 
-See `docs/setup-guide.md` for the full step-by-step.
+| Dimension | Weight | Signals |
+|-----------|--------|---------|
+| Security | 30% | breach, hack, ransomware, vulnerability |
+| Compliance | 25% | missing/expired certs, fines, violations |
+| Financial | 20% | bankruptcy risk, credit score, revenue trend |
+| Operational | 15% | outage, downtime, dependency risk |
+| ESG | 10% | scandal, corruption, discrimination |
+
+Classification: Low (0-25) → Medium (26-50) → High (51-75) → Critical (76-100)
+
+## UiPath Maestro
+
+Case published to `nobmajhrqfjf/DefaultTenant` with 6 stages:
+Intake → Automated Assessment → Risk Scoring → Human Review → Decision → Continuous Monitoring
+
+See `uipath/maestro-case/` for the case schema and `uipath/deploy.sh` for deployment.
+
+## Environment Variables
+## Repo Layout
