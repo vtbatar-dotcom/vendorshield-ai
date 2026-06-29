@@ -1,15 +1,10 @@
 """Full pipeline orchestrator.
 
-Single endpoint that runs all 4 agents and returns a complete vendor risk report.
+Runs all 4 agents in parallel and saves result to SQLite case store.
 POST /api/assess/full
-
-Flow:
-  Research Agent (8001) ─┐
-  Compliance Agent (8002) ├─→ Risk Scoring (8000) → Final Report
-  Financial Agent (8003) ─┘
 """
 from __future__ import annotations
-import urllib.request, json, concurrent.futures, os
+import urllib.request, json, concurrent.futures
 from datetime import datetime
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -21,6 +16,7 @@ RESEARCH_URL   = "http://localhost:8001/assess"
 COMPLIANCE_URL = "http://localhost:8002/assess"
 FINANCIAL_URL  = "http://localhost:8003/assess"
 RISK_URL       = "http://localhost:8000/api/risk/score"
+STORE_URL      = "http://localhost:8000/api/vendors/{}/store"
 
 
 class CertItem(BaseModel):
@@ -69,7 +65,7 @@ class FullAssessResponse(BaseModel):
     next_action: str
 
 
-def http_post(url: str, data: dict, timeout: int = 60) -> dict:
+def http_post(url: str, data: dict, timeout: int = 90) -> dict:
     req = urllib.request.Request(
         url,
         data=json.dumps(data).encode(),
@@ -83,18 +79,18 @@ def http_post(url: str, data: dict, timeout: int = 60) -> dict:
 
 
 def run_research(req: FullAssessRequest) -> dict:
-    print("  [1/3] Research Agent starting...")
+    print("  [1/3] Research Agent...")
     result = http_post(RESEARCH_URL, {
         "vendor_id": req.vendor_id,
         "vendor_name": req.vendor_name,
         "vendor_domain": req.vendor_domain
     })
-    print("  [1/3] Research Agent done.")
+    print("  [1/3] Research done.")
     return result
 
 
 def run_compliance(req: FullAssessRequest) -> dict:
-    print("  [2/3] Compliance Agent starting...")
+    print("  [2/3] Compliance Agent...")
     result = http_post(COMPLIANCE_URL, {
         "vendor_id": req.vendor_id,
         "vendor_name": req.vendor_name,
@@ -102,18 +98,18 @@ def run_compliance(req: FullAssessRequest) -> dict:
         "certifications": [c.model_dump() for c in req.certifications],
         "markets": req.markets
     })
-    print("  [2/3] Compliance Agent done.")
+    print("  [2/3] Compliance done.")
     return result
 
 
 def run_financial(req: FullAssessRequest) -> dict:
-    print("  [3/3] Financial Agent starting...")
+    print("  [3/3] Financial Agent...")
     result = http_post(FINANCIAL_URL, {
         "vendor_id": req.vendor_id,
         "vendor_name": req.vendor_name,
         "duns_number": req.duns_number
     })
-    print("  [3/3] Financial Agent done.")
+    print("  [3/3] Financial done.")
     return result
 
 
@@ -131,27 +127,21 @@ def next_action(classification: str, routing: str) -> str:
 def full_assess(req: FullAssessRequest) -> FullAssessResponse:
     print(f"\nStarting full assessment for {req.vendor_name}...")
 
-    # Run all 3 agents in parallel
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-        f_research    = executor.submit(run_research, req)
-        f_compliance  = executor.submit(run_compliance, req)
-        f_financial   = executor.submit(run_financial, req)
-
+        f_research   = executor.submit(run_research, req)
+        f_compliance = executor.submit(run_compliance, req)
+        f_financial  = executor.submit(run_financial, req)
         research   = f_research.result()
         compliance = f_compliance.result()
         financial  = f_financial.result()
 
-    print("All agents complete. Running risk scoring...")
+    print("All agents done. Scoring...")
 
-    # Build compliance gaps list
-    compliance_gaps = []
-    if "gaps" in compliance:
-        compliance_gaps = [
-            g["certification"] + ": " + g["status"]
-            for g in compliance.get("gaps", [])
-        ]
+    compliance_gaps = [
+        g["certification"] + ": " + g["status"]
+        for g in compliance.get("gaps", [])
+    ]
 
-    # Run risk scoring with all signals combined
     risk = http_post(RISK_URL, {
         "vendor_id": req.vendor_id,
         "research_signals": research.get("risk_signals", []),
@@ -168,24 +158,18 @@ def full_assess(req: FullAssessRequest) -> FullAssessResponse:
         }
     })
 
-    print(f"Assessment complete. Score: {risk.get('overall_score')}/100")
-
-    # Build risk summary
-    analyst = financial.get("analyst_notes", "")
-    comp_summary = compliance.get("risk_summary", "")
-    top_signals = research.get("risk_signals", [])[:2]
+    dims = risk.get("dimension_scores", {})
     summary_parts = []
-    if top_signals:
-        summary_parts.append("Key risks: " + "; ".join(top_signals[:2]))
-    if comp_summary:
-        summary_parts.append(comp_summary[:200])
-    if analyst:
-        summary_parts.append(analyst[:200])
+    top = research.get("risk_signals", [])[:2]
+    if top:
+        summary_parts.append("Key risks: " + "; ".join(top[:2]))
+    if compliance.get("risk_summary"):
+        summary_parts.append(compliance["risk_summary"][:200])
+    if financial.get("analyst_notes"):
+        summary_parts.append(financial["analyst_notes"][:200])
     risk_summary = " | ".join(summary_parts)
 
-    dims = risk.get("dimension_scores", {})
-
-    return FullAssessResponse(
+    response = FullAssessResponse(
         vendor_id=req.vendor_id,
         vendor_name=req.vendor_name,
         assessed_at=datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -214,3 +198,19 @@ def full_assess(req: FullAssessRequest) -> FullAssessResponse:
             risk.get("routing", "")
         )
     )
+
+    # Save to case store
+    try:
+        http_post(STORE_URL.format(req.vendor_id), {
+            "stage": "RiskScoring" if risk.get("overall_score", 0) > 50 else "Decision",
+            "overall_score": risk.get("overall_score", 0),
+            "classification": risk.get("classification", ""),
+            "findings": research.get("risk_signals", [])[:5],
+            "decisions": [],
+            "sla_status": "on_track"
+        }, timeout=5)
+        print(f"Case stored for {req.vendor_id}")
+    except Exception as e:
+        print(f"Case store warning: {e}")
+
+    return response

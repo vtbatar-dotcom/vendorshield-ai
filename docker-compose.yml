@@ -1,10 +1,56 @@
 services:
-  api:
-    build: ./api
+  main-api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
     ports:
       - "8000:8000"
-    env_file:
-      - .env
-    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+    env_file: .env
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000
     volumes:
-      - ./api:/app/api
+      - ./vendorshield.db:/app/vendorshield.db
+
+  research-agent:
+    build:
+      context: external-agents/research-agent
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    env_file: .env
+    command: uvicorn main:app --host 0.0.0.0 --port 8001
+
+  compliance-agent:
+    build:
+      context: external-agents/compliance-agent
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    env_file: .env
+    command: uvicorn main:app --host 0.0.0.0 --port 8002
+
+  financial-agent:
+    build:
+      context: external-agents/financial-agent
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8003"
+    env_file: .env
+    command: uvicorn main:app --host 0.0.0.0 --port 8003
+
+  remediation-agent:
+    build:
+      context: external-agents/remediation-agent
+      dockerfile: Dockerfile
+    ports:
+      - "8004:8004"
+    env_file: .env
+    command: uvicorn main:app --host 0.0.0.0 --port 8004
+
+  intake-agent:
+    build:
+      context: external-agents/intake-agent
+      dockerfile: Dockerfile
+    ports:
+      - "8005:8005"
+    env_file: .env
+    command: uvicorn main:app --host 0.0.0.0 --port 8005
