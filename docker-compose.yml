@@ -6,9 +6,20 @@ services:
     ports:
       - "8000:8000"
     env_file: .env
+    environment:
+      - RESEARCH_URL=http://research-agent:8001
+      - COMPLIANCE_URL=http://compliance-agent:8002
+      - FINANCIAL_URL=http://financial-agent:8003
+      - RISK_URL=http://main-api:8000
+      - MAIN_URL=http://main-api:8000
     command: uvicorn api.main:app --host 0.0.0.0 --port 8000
     volumes:
       - ./vendorshield.db:/app/vendorshield.db
+    depends_on:
+      - research-agent
+      - compliance-agent
+      - financial-agent
+      - remediation-agent
 
   research-agent:
     build:

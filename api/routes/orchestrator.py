@@ -1,10 +1,10 @@
 """Full pipeline orchestrator.
 
-Runs all 4 agents in parallel and saves result to SQLite case store.
-POST /api/assess/full
+Agent URLs are env-configurable so they work both under docker-compose
+(service names) and under start.sh (localhost).
 """
 from __future__ import annotations
-import urllib.request, json, concurrent.futures
+import urllib.request, json, concurrent.futures, os
 from datetime import datetime
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -12,11 +12,13 @@ from typing import Optional
 
 router = APIRouter(prefix="/api/assess", tags=["orchestrator"])
 
-RESEARCH_URL   = "http://localhost:8001/assess"
-COMPLIANCE_URL = "http://localhost:8002/assess"
-FINANCIAL_URL  = "http://localhost:8003/assess"
-RISK_URL       = "http://localhost:8000/api/risk/score"
-STORE_URL      = "http://localhost:8000/api/vendors/{}/store"
+# Configurable via env — defaults work for localhost (start.sh)
+# For docker-compose set RESEARCH_URL=http://research-agent:8001 etc.
+RESEARCH_URL   = os.getenv("RESEARCH_URL",   "http://localhost:8001") + "/assess"
+COMPLIANCE_URL = os.getenv("COMPLIANCE_URL", "http://localhost:8002") + "/assess"
+FINANCIAL_URL  = os.getenv("FINANCIAL_URL",  "http://localhost:8003") + "/assess"
+RISK_URL       = os.getenv("RISK_URL",       "http://localhost:8000") + "/api/risk/score"
+STORE_URL      = os.getenv("MAIN_URL",       "http://localhost:8000") + "/api/vendors/{}/store"
 
 
 class CertItem(BaseModel):
@@ -209,7 +211,6 @@ def full_assess(req: FullAssessRequest) -> FullAssessResponse:
             "decisions": [],
             "sla_status": "on_track"
         }, timeout=5)
-        print(f"Case stored for {req.vendor_id}")
     except Exception as e:
         print(f"Case store warning: {e}")
 

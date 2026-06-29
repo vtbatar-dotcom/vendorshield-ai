@@ -12,13 +12,11 @@ from api.models.schemas import CaseResponse
 
 router = APIRouter(prefix="/api/vendors", tags=["vendors"])
 
-DB_PATH = Path(os.getenv("DATABASE_URL", "").replace("sqlite:///", "")) or Path("vendorshield.db")
-if str(DB_PATH).startswith("postgresql"):
-    DB_PATH = Path("vendorshield.db")
+DB_PATH = "vendorshield.db"
 
 
 def get_db() -> sqlite3.Connection:
-    db = sqlite3.connect("vendorshield.db")
+    db = sqlite3.connect(DB_PATH)
     db.execute("""
         CREATE TABLE IF NOT EXISTS vendor_cases (
             vendor_id TEXT PRIMARY KEY,
